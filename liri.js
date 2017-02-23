@@ -1,6 +1,9 @@
 // Load the Twitter Node.js module
 var Twitter = require('twitter');
 
+// Load the Spotify Node.js module
+var spotify = require('spotify');
+
 // Read in the Twitter keys from a file
 var keys = require('./keys.js');
 
@@ -36,6 +39,7 @@ if (liriCommand === 'my-tweets') {
 	client.get('statuses/user_timeline', params, function(error, tweets, response) {
 		if (error) {
 			console.log('ERROR: Retrieving user tweets -- ' + error);
+			return;
 		} else {
 			// Pretty print user tweets
 			console.log('------------------------');
@@ -52,8 +56,34 @@ if (liriCommand === 'my-tweets') {
 	});
 
 } else if (liriCommand === `spotify-this-song`) {
-	console.log('__spotify-this-song__');
+	// console.log('__spotify-this-song__');
 
+	// If no song is provided, LIRI defaults to 'The Sign' by Ace Of Base
+	var search;
+	if (liriArg === '') {
+		search = 'The Sign Ace Of Base';
+	} else {
+		search = liriArg;
+	}
+	
+	spotify.search({ type: 'track', query: search}, function(error, data) {
+	    if (error) {
+			console.log('ERROR: Retrieving Spotify track -- ' + error);
+			return;
+	    } else {
+	    	// Pretty print the song information
+			console.log('------------------------');
+			console.log('Song information: ');
+			console.log('------------------------\n');
+
+			var songInfo = data.tracks.items[0];
+
+			console.log('Song Name: ' + songInfo.name);
+			console.log('Artist: ' + songInfo.artists[0].name);
+			console.log('Album: ' + songInfo.album.name);
+			console.log('Preview Here: ' + songInfo.preview_url);
+	    }
+	});
 
 } else if (liriCommand === `movie-this`) {
 	console.log('__movie-this__');
