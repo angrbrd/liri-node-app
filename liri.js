@@ -5,6 +5,7 @@
 var Twitter = require('twitter');
 var spotify = require('spotify');
 var request = require('request');
+var fs = require('fs');
 
 /*
 *	Load the user Twitter keys
@@ -14,7 +15,7 @@ var keys = require('./keys.js');
 var twitterKeys = keys.twitterKeys;
 
 /*
-* 	Read in command line arguments and execute the command
+* 	Read in command line arguments
 */
 
 // Read in the command line arguments
@@ -29,13 +30,8 @@ for (var i = 3; i < cmdArgs.length; i++) {
 	liriArg += cmdArgs[i] + ' ';
 }
 
-// console.log('liriCommand = ' + liriCommand);
-// console.log('liriArg = ' + liriArg + '\n');
-
-// Determine which LIRI command is being requested by the user
-if (liriCommand === 'my-tweets') {
-	// console.log('__my-tweets__');
-
+// retrieveTweets will retrieve my last 20 tweets and display them together with the date
+function retrieveTweets() {
 	// Initialize the Twitter client
 	var client = new Twitter(twitterKeys);
 
@@ -59,18 +55,17 @@ if (liriCommand === 'my-tweets') {
 				console.log('------------------------\n');
 			}
 		}
-
 	});
+}
 
-} else if (liriCommand === `spotify-this-song`) {
-	// console.log('__spotify-this-song__');
-
+// spotifySong will retrieve information on a song from Spotify
+function spotifySong(song) {
 	// If no song is provided, LIRI defaults to 'The Sign' by Ace Of Base
 	var search;
-	if (liriArg === '') {
+	if (song === '') {
 		search = 'The Sign Ace Of Base';
 	} else {
-		search = liriArg;
+		search = song;
 	}
 
 	spotify.search({ type: 'track', query: search}, function(error, data) {
@@ -78,29 +73,33 @@ if (liriCommand === 'my-tweets') {
 			console.log('ERROR: Retrieving Spotify track -- ' + error);
 			return;
 	    } else {
-	    	// Pretty print the song information
-			console.log('------------------------');
-			console.log('Song Information: ');
-			console.log('------------------------\n');
-
 			var songInfo = data.tracks.items[0];
+			if (!songInfo) {
+				console.log('ERROR: No song info retrieved, please check the spelling of the song name!');
+				return;
+			} else {
+				// Pretty print the song information
+				console.log('------------------------');
+				console.log('Song Information: ');
+				console.log('------------------------\n');
 
-			console.log('Song Name: ' + songInfo.name);
-			console.log('Artist: ' + songInfo.artists[0].name);
-			console.log('Album: ' + songInfo.album.name);
-			console.log('Preview Here: ' + songInfo.preview_url);
+				console.log('Song Name: ' + songInfo.name);
+				console.log('Artist: ' + songInfo.artists[0].name);
+				console.log('Album: ' + songInfo.album.name);
+				console.log('Preview Here: ' + songInfo.preview_url);
+			}
 	    }
 	});
+}
 
-} else if (liriCommand === `movie-this`) {
-	// console.log('__movie-this__');
-
+// retrieveOMDBInfo will retrieve information on a movie from the OMDB database
+function retrieveOBDBInfo(movie) {
 	// If no movie is provided, LIRI defaults to 'Mr. Nobody'
 	var search;
-	if (liriArg === '') {
+	if (movie === '') {
 		search = 'Mr. Nobody';
 	} else {
-		search = liriArg;
+		search = movie;
 	}
 
 	// Replace spaces with '+' for the query string
@@ -108,7 +107,6 @@ if (liriCommand === 'my-tweets') {
 
 	// Construct the query string
 	var queryStr = 'http://www.omdbapi.com/?t=' + search + '&plot=full&tomatoes=true';
-	//console.log('queryStr = ' + queryStr);
 
 	// Send the request to OMDB
 	request(queryStr, function (error, response, body) {
@@ -117,27 +115,71 @@ if (liriCommand === 'my-tweets') {
 			return;
 		} else {
 			var data = JSON.parse(body);
+			if (!data.Title && !data.Released && !data.imdbRating) {
+				console.log('ERROR: No movie info retrieved, please check the spelling of the movie name!');
+				return;
+			} else {
+		    	// Pretty print the movie information
+				console.log('------------------------');
+				console.log('Movie Information: ');
+				console.log('------------------------\n');
 
-	    	// Pretty print the movie information
-			console.log('------------------------');
-			console.log('Movie Information: ');
-			console.log('------------------------\n');
-
-			console.log('Movie Title: ' + data.Title);
-			console.log('Year Released: ' + data.Released);
-			console.log('IMBD Rating: ' + data.imdbRating);
-			console.log('Country Produced: ' + data.Country);
-			console.log('Language: ' + data.Language);
-			console.log('Plot: ' + data.Plot);
-			console.log('Actors: ' + data.Actors);
-			console.log('Rotten Tomatoes Rating: ' + data.tomatoRating);
-			console.log('Rotten Tomatoes URL: ' + data.tomatoURL);
+				console.log('Movie Title: ' + data.Title);
+				console.log('Year Released: ' + data.Released);
+				console.log('IMBD Rating: ' + data.imdbRating);
+				console.log('Country Produced: ' + data.Country);
+				console.log('Language: ' + data.Language);
+				console.log('Plot: ' + data.Plot);
+				console.log('Actors: ' + data.Actors);
+				console.log('Rotten Tomatoes Rating: ' + data.tomatoRating);
+				console.log('Rotten Tomatoes URL: ' + data.tomatoURL);
+			}
 		}
 	});
+}
+
+// doAsYerTold will read in a file to determine the desired command and then execute
+function doAsYerTold() {
+	// Read in the file containing the command
+	fs.readFile('./random.txt', 'utf8', function (error, data) {
+		if (error) {
+			console.log('ERROR: Reading random.txt -- ' + error);
+			return;
+		} else {
+			// Split out the command name and the parameter name
+			var cmdString = data.split(',');
+			var command = cmdString[0].trim();
+			var param = cmdString[1].trim();
+
+			switch(command) {
+				case 'my-tweets':
+					retrieveTweets(); 
+					break;
+
+				case 'spotify-this-song':
+					spotifySong(param);
+					break;
+
+				case 'movie-this':
+					retrieveOBDBInfo(param);
+					break;
+			}
+		}
+	});
+}
+
+// Determine which LIRI command is being requested by the user
+if (liriCommand === 'my-tweets') {
+	retrieveTweets(); 
+
+} else if (liriCommand === `spotify-this-song`) {
+	spotifySong(liriArg);
+
+} else if (liriCommand === `movie-this`) {
+	retrieveOBDBInfo(liriArg);
 
 } else if (liriCommand ===  `do-what-it-says`) {
-	console.log('__do-what-it-says__');
-
+	doAsYerTold();
 
 } else {
 	// If the user types in a command that LIRI does not recognize, output the Usage menu 
