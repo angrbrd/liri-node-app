@@ -1,3 +1,6 @@
+// Load the Twitter Node.js module
+var Twitter = require('twitter');
+
 // Read in the Twitter keys from a file
 var keys = require('./keys.js');
 
@@ -5,8 +8,7 @@ var keys = require('./keys.js');
 var twitterKeys = keys.twitterKeys;
 
 // Read in the command line arguments
-var liriCommand = process.argv[2];
-var liriArg = process.argv[3];
+var cmdArgs = process.argv;
 
 // The LIRI command will always be the second command line argument
 var liriCommand = cmdArgs[2];
@@ -17,13 +19,37 @@ for (var i = 3; i < cmdArgs.length; i++) {
 	liriArg += cmdArgs[i] + ' ';
 }
 
-console.log('liriCommand = ' + liriCommand);
-console.log('liriArg = ' + liriArg + '\n');
+// console.log('liriCommand = ' + liriCommand);
+// console.log('liriArg = ' + liriArg + '\n');
 
 // Determine which LIRI command is being requested by the user
 if (liriCommand === 'my-tweets') {
-	console.log('__my-tweets__');
+	// console.log('__my-tweets__');
 
+	// Initialize the Twitter client
+	var client = new Twitter(twitterKeys);
+
+	// Set the 'screen_name' to my Twitter handle
+	var params = {screen_name: '_angrbrd', count: 20};
+
+	// Retrieve the last 20 tweets
+	client.get('statuses/user_timeline', params, function(error, tweets, response) {
+		if (error) {
+			console.log('ERROR: Retrieving user tweets -- ' + error);
+		} else {
+			// Pretty print user tweets
+			console.log('------------------------');
+			console.log('User Tweets: ');
+			console.log('------------------------\n');
+
+			for (var i = 0; i < tweets.length; i++) {
+				console.log('Created on: ' + tweets[i].created_at);
+				console.log('Tweet content: ' + tweets[i].text);
+				console.log('------------------------\n');
+			}
+		}
+
+	});
 
 } else if (liriCommand === `spotify-this-song`) {
 	console.log('__spotify-this-song__');
