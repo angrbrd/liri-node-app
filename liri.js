@@ -1,14 +1,21 @@
-// Load the Twitter Node.js module
+/*
+*	Load Required Node Modules
+*/
+
 var Twitter = require('twitter');
-
-// Load the Spotify Node.js module
 var spotify = require('spotify');
+var request = require('request');
 
-// Read in the Twitter keys from a file
+/*
+*	Load the user Twitter keys
+*/
+
 var keys = require('./keys.js');
-
-// Store the Twitter keys in a variable
 var twitterKeys = keys.twitterKeys;
+
+/*
+* 	Read in command line arguments and execute the command
+*/
 
 // Read in the command line arguments
 var cmdArgs = process.argv;
@@ -65,7 +72,7 @@ if (liriCommand === 'my-tweets') {
 	} else {
 		search = liriArg;
 	}
-	
+
 	spotify.search({ type: 'track', query: search}, function(error, data) {
 	    if (error) {
 			console.log('ERROR: Retrieving Spotify track -- ' + error);
@@ -73,7 +80,7 @@ if (liriCommand === 'my-tweets') {
 	    } else {
 	    	// Pretty print the song information
 			console.log('------------------------');
-			console.log('Song information: ');
+			console.log('Song Information: ');
 			console.log('------------------------\n');
 
 			var songInfo = data.tracks.items[0];
@@ -86,8 +93,47 @@ if (liriCommand === 'my-tweets') {
 	});
 
 } else if (liriCommand === `movie-this`) {
-	console.log('__movie-this__');
+	// console.log('__movie-this__');
 
+	// If no movie is provided, LIRI defaults to 'Mr. Nobody'
+	var search;
+	if (liriArg === '') {
+		search = 'Mr. Nobody';
+	} else {
+		search = liriArg;
+	}
+
+	// Replace spaces with '+' for the query string
+	search = search.split(' ').join('+');
+
+	// Construct the query string
+	var queryStr = 'http://www.omdbapi.com/?t=' + search + '&plot=full&tomatoes=true';
+	//console.log('queryStr = ' + queryStr);
+
+	// Send the request to OMDB
+	request(queryStr, function (error, response, body) {
+		if ( error || (response.statusCode !== 200) ) {
+			console.log('ERROR: Retrieving OMDB entry -- ' + error);
+			return;
+		} else {
+			var data = JSON.parse(body);
+
+	    	// Pretty print the movie information
+			console.log('------------------------');
+			console.log('Movie Information: ');
+			console.log('------------------------\n');
+
+			console.log('Movie Title: ' + data.Title);
+			console.log('Year Released: ' + data.Released);
+			console.log('IMBD Rating: ' + data.imdbRating);
+			console.log('Country Produced: ' + data.Country);
+			console.log('Language: ' + data.Language);
+			console.log('Plot: ' + data.Plot);
+			console.log('Actors: ' + data.Actors);
+			console.log('Rotten Tomatoes Rating: ' + data.tomatoRating);
+			console.log('Rotten Tomatoes URL: ' + data.tomatoURL);
+		}
+	});
 
 } else if (liriCommand ===  `do-what-it-says`) {
 	console.log('__do-what-it-says__');
