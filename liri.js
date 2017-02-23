@@ -8,10 +8,19 @@ var twitterKeys = keys.twitterKeys;
 var liriCommand = process.argv[2];
 var liriArg = process.argv[3];
 
-console.log("liriCommand = " + liriCommand);
-console.log("liriArg = " + liriArg + '\n');
+// The LIRI command will always be the second command line argument
+var liriCommand = cmdArgs[2];
 
-// Determine which Liri command is being requested by the user
+// The parameter to the LIRI command may contain spaces
+var liriArg = '';
+for (var i = 3; i < cmdArgs.length; i++) {
+	liriArg += cmdArgs[i] + ' ';
+}
+
+console.log('liriCommand = ' + liriCommand);
+console.log('liriArg = ' + liriArg + '\n');
+
+// Determine which LIRI command is being requested by the user
 if (liriCommand === 'my-tweets') {
 	console.log('__my-tweets__');
 
@@ -29,7 +38,7 @@ if (liriCommand === 'my-tweets') {
 
 
 } else {
-	// If the user types in a command that Liri does not recognize, output the Usage menu 
+	// If the user types in a command that LIRI does not recognize, output the Usage menu 
 	// which lists the available commands.
 	console.log('Usage:');
 	console.log('    node liri.js my-tweets');
